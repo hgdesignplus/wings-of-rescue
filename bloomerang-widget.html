@@ -1,58 +1,70 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Bloomerang Widget</title>
+  <title>Wings of Rescue Donation Widget</title>
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <style>
+    body { font-family: sans-serif; padding: 30px; color: #333; }
+  </style>
 </head>
 <body>
+  <h2>Loading widget...</h2>
+
   <script>
     (function() {
+      const log = (msg) => console.log('[Bloomerang Loader]', msg);
+
       var insertErrorMessage = function(message) {
-        jQuery('script').each(function(i, e) {
-          var js = jQuery(e)[0].src || '';
-          if (js.indexOf('229943296.js') > 0)
-            jQuery(e).after('<p style="color: red">' + message + '</p>');
-        });
+        log("Insert error message: " + message);
+        const errorMsg = document.createElement("p");
+        errorMsg.style.color = "red";
+        errorMsg.innerText = message;
+        document.body.appendChild(errorMsg);
       };
+
       var fetchWidget = function() {
+        log("Calling requireJQueryValidation...");
+        if (!window.Bloomerang) {
+          insertErrorMessage("Bloomerang API not loaded.");
+          return;
+        }
+
         Bloomerang.Util.requireJQueryValidation(function() {
-          Bloomerang.useKey('pub_a922bd44-a9b9-11eb-ab84-0253c981a9f9');
+          log("jQuery validation ready");
+
+          Bloomerang.useKey("pub_a922bd44-a9b9-11eb-ab84-0253c981a9f9");
 
           var success = function(result) {
+            log("Widget fetched successfully");
             eval(result.WidgetJavascript);
           };
+
           var failure = function() {
-            insertErrorMessage('EmailSignup form could not be loaded. Please try again later.');
+            insertErrorMessage("EmailSignup form could not be loaded. Please try again later.");
           };
 
           var data = {
-            ServedSecurely: (window.location.protocol == 'https:' || window.location.href.indexOf('http://localhost:') == 0),
+            ServedSecurely: (window.location.protocol === "https:" || window.location.href.indexOf("http://localhost:") === 0),
             FormUrl: window.location.href
           };
 
-          Bloomerang.Api._post('v1/Widget/229943296', data, success, failure);
+          Bloomerang.Api._post("v1/Widget/229943296", data, success, failure);
         });
       };
-      var startBloomerangLoad = function() {
-        if (window.bloomerangLoadStarted == undefined) {
-          window.bloomerangLoadStarted = true;
-          var script = document.createElement('script');
-          script.type = 'text/javascript';
-          script.src = 'https://crm.bloomerang.co/Content/Scripts/Api/Bloomerang-v2.js?nocache=1751486054';
-          document.getElementsByTagName('head')[0].appendChild(script);
-          waitForBloomerangLoad(fetchWidget);
-        } else {
-          waitForBloomerangLoad(fetchWidget);
-        }
-      };
 
-      var waitForBloomerangLoad = function(callback) {
-        if (typeof(Bloomerang) === 'undefined' || !Bloomerang._isReady) {
-          setTimeout(function() {
-            waitForBloomerangLoad(callback)
-          }, 500);
-        } else {
-          callback();
+      var startBloomerangLoad = function() {
+        if (!window.bloomerangLoadStarted) {
+          window.bloomerangLoadStarted = true;
+          var script = document.createElement("script");
+          script.src = "https://crm.bloomerang.co/Content/Scripts/Api/Bloomerang-v2.js";
+          script.onload = function() {
+            log("Bloomerang API loaded");
+            fetchWidget();
+          };
+          script.onerror = function() {
+            insertErrorMessage("Failed to load Bloomerang API.");
+          };
+          document.head.appendChild(script);
         }
       };
 
